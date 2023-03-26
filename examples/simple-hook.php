@@ -1,27 +1,60 @@
 <?php
 include_once "../lib/pe.php-hooks.php";
 
-/* The simplest type of hook that does not return data but only uses it */
 
-//You can add a hook object in any order before executing the fn_main() function
-PeHooks::add("simple_hook_demo", function () {
-    echo " fitrst";
+// Adding a simple hook to be executed in the fn_variable() and fn_array() functions
+
+/**
+ * @param string - Hook name (ID)
+ * @param object - Hook callback function
+ */
+PeHooks::add("simple_hook_varriable", function (&$varriable /* $var1, $var2, ... */) {     //Use the & operator to make changes to the variable and get new data
+
+    $varriable .= " - First hook -"; // or $varriable = " - First hook -"; to overwrite
+
 });
 
 
-function fn_main()
+function fn_varriable()
 {
+    $varriable = "Original text";
 
-    echo "Hooks: ";
-    //Execute the added objects as a function
-    PeHooks::run("simple_hook_demo");
+    PeHooks::apply("simple_hook_varriable", $varriable);
+
+    return  $varriable;
 }
 
-PeHooks::add("simple_hook_demo", function () {
-    echo " last";
+
+function fn_array()
+{
+    $arr = array(
+        "original" => "inited"
+    );
+
+    PeHooks::apply("simple_hook_array", $arr);
+
+    return  $arr;
+}
+
+
+/**
+ * @param string - Hook name (ID)
+ * @param object - Hook callback function
+ */
+PeHooks::add("simple_hook_array", function (&$arr) { // Use the & operator to make changes to the array and get new data
+
+    $arr["new_item"] = 'Added the "simple_hook_array" hook'; // Or overwrite the value of "original" - $arr["original"] = "not original";
+
 });
 
 
-fn_main(); // =  Hooks: fitrst last
 
-//It is no longer possible to add a hook object at this point (PEHook::add).
+print_r([
+    fn_varriable(), // Result: "Original text - First hook -"
+    fn_array() /* Result:
+        array(
+            "original" => "inited" || "not original",
+            "new_item" => "Added the "simple_hook_array" hook"
+        );
+    */
+]);

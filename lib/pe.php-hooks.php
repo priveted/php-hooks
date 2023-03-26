@@ -24,7 +24,7 @@ class PeHooks
     /**
      * Add data to the hook
      * @param string - Hook name (ID)
-     * @param object - Hook function / function(array $data) { ... }
+     * @param object - Hook function -> A set of keys. If you need to return a value, use & - the value will be written to the variable when the hook is executed/ function(&$data, $data2, ...) { ... }
      */
 
     static function add($name = "index", $fn = true)
@@ -36,43 +36,33 @@ class PeHooks
 
 
     /**
-     * Run all functions added to the current hookЦ
+     * Run all functions added to the current hook
      * @param string - Hook name (ID)
-     * @param array - Return an array of data to the add function 
-     * @param bool - Return the result 
-     * @param bool - Overrides the output result
-     * @return array
+     * @param mixed - A set of variables or arrays in which values will be written / hooks::apply("name", $var1, $array1, ...)
      */
 
-    static function run($name = "index", $keys = array(0), $is_return = false, $override = false)
+    static function apply($name = "index", &...$keys)
     {
         $data = (self::is($name)) ? self::$storage['hook_data'][$name] : array();
-        $last = 0;
-        $results = isset(self::$storage['hook_result'][$name]) ?
-            self::$storage['hook_result'][$name] : array();
+        $results = isset(self::$storage['hook_result'][$name]) ? self::$storage['hook_result'][$name] : array();
         if ($data) {
             foreach ($data as $key => $hook) {
-                $results[$key] = $hook($keys);
+                $results[$key] = ($keys) ? $hook(...$keys) : $hook();
             }
+
             self::$storage['hook_results'][$name] = $results;
 
-            if ($is_return) {
-                if ($results) {
-                    foreach ($results as $key => $item) {
-                        if ($item) {
-                            if (is_array($item)) {
-                                foreach ($item as $k => $v) {
-                                    $keys[$k] = $v;
-                                }
+            if ($results) {
+                foreach ($results as $key => $item) {
+                    if ($item) {
+                        if (is_array($item)) {
+                            foreach ($item as $k => $v) {
+                                $keys[$k] = $v;
                             }
                         }
-                        $last = $key;
                     }
-                    if ($override)
-                        return $results[$last];
-                    else
-                        return $keys;
                 }
+                return $keys;
             }
         } else
             return false;
